@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Hub de Révision - Kalarma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #020617;
+            color: #f8fafc;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: #6366f1;
+            box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.4);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease forwards; }
+    </style>
+</head>
+<body class="p-6">
+
+    <div id="app" class="max-w-6xl mx-auto">
+        
+        <header class="text-center py-12 animate-fade-in">
+            <h1 class="text-5xl font-black text-white tracking-tighter uppercase italic">
+                Hub <span class="text-indigo-500">Révision</span>
+            </h1>
+            <p class="text-slate-400 mt-4 font-medium">Sélectionnez un module pour commencer à réviser</p>
+            <div class="h-1 w-20 bg-indigo-500 mx-auto mt-6 rounded-full"></div>
+        </header>
+
+        <div id="loader" class="flex flex-col items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-indigo-500 border-opacity-50"></div>
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-4">Scan du dépôt GitHub...</p>
+        </div>
+
+        <div id="app-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            </div>
+
+        <div id="error-state" class="hidden text-center py-20">
+            <p class="text-rose-400 font-bold">Impossible de charger les données du dépôt.</p>
+        </div>
+
+        <footer class="mt-20 py-10 border-t border-slate-900 text-center">
+            <p class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Dépôt source : Kalarma/Revision_BTS</p>
+        </footer>
+    </div>
+
+    <script>
+        const GITHUB_REPO = "Kalarma/Revision_BTS";
+        const API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/`;
+
+        async function fetchModules() {
+            const grid = document.getElementById('app-grid');
+            const loader = document.getElementById('loader');
+            const errorState = document.getElementById('error-state');
+
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Erreur API');
+                
+                const data = await response.json();
+                
+                // On ne garde que les dossiers (type === 'dir') et on ignore les dossiers cachés
+                const folders = data.filter(item => item.type === 'dir' && !item.name.startsWith('.'));
+
+                if (folders.length === 0) {
+                    loader.classList.add('hidden');
+                    errorState.classList.remove('hidden');
+                    return;
+                }
+
+                grid.innerHTML = folders.map((folder, index) => `
+                    <a href="https://github.com/${GITHUB_REPO}/tree/main/${folder.path}" 
+                       target="_blank"
+                       class="glass-card p-8 rounded-[2rem] flex flex-col items-start group animate-fade-in"
+                       style="animation-delay: ${index * 100}ms">
+                        
+                        <div class="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-6 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                            </svg>
+                        </div>
+                        
+                        <h3 class="text-xl font-bold text-white mb-2">${cleanName(folder.name)}</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed mb-6">Accéder au module de révision pour le dossier ${folder.name}.</p>
+                        
+                        <div class="mt-auto flex items-center text-indigo-400 text-xs font-black uppercase tracking-widest">
+                            Ouvrir le module
+                            <svg class="w-4 h-4 ml-2 transform group-hover:translateX-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                            </svg>
+                        </div>
+                    </a>
+                `).join('');
+
+                loader.classList.add('hidden');
+                grid.classList.remove('hidden');
+
+            } catch (error) {
+                console.error(error);
+                loader.classList.add('hidden');
+                errorState.classList.remove('hidden');
+            }
+        }
+
+        // Fonction pour rendre les noms de dossiers plus jolis (ex: "Revision_MCO" -> "Revision MCO")
+        function cleanName(name) {
+            return name.replace(/_/g, ' ').replace(/-/g, ' ');
+        }
+
+        window.onload = fetchModules;
+    </script>
+</body>
+</html>
