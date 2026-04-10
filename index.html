@@ -36,38 +36,49 @@
         .animate-fade-in { animation: fadeIn 0.5s ease forwards; }
     </style>
 </head>
-<body class="p-6">
+<body class="flex flex-col min-h-screen">
 
-    <div id="app" class="max-w-6xl mx-auto">
+    <div id="app" class="max-w-6xl mx-auto p-6 flex-grow w-full">
         
         <header class="text-center py-12 animate-fade-in">
             <h1 class="text-5xl font-black text-white tracking-tighter uppercase italic">
                 Hub <span class="text-indigo-500">Révision</span>
             </h1>
-            <p class="text-slate-400 mt-4 font-medium">Sélectionnez un module pour commencer à réviser</p>
+            <p class="text-slate-400 mt-4 font-medium italic">Tes outils de réussite à portée de clic</p>
             <div class="h-1 w-20 bg-indigo-500 mx-auto mt-6 rounded-full"></div>
         </header>
 
         <div id="loader" class="flex flex-col items-center justify-center py-20">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-indigo-500 border-opacity-50"></div>
-            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-4">Scan du dépôt GitHub...</p>
+            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-4">Initialisation des modules...</p>
         </div>
 
         <div id="app-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
             </div>
 
         <div id="error-state" class="hidden text-center py-20">
-            <p class="text-rose-400 font-bold">Impossible de charger les données du dépôt.</p>
+            <p class="text-rose-400 font-bold">Oups ! Impossible de joindre le serveur GitHub.</p>
         </div>
-
-        <footer class="mt-20 py-10 border-t border-slate-900 text-center">
-            <p class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Dépôt source : Kalarma/Revision_BTS</p>
-        </footer>
     </div>
 
+    <footer class="mt-auto pt-12 pb-8 text-center flex flex-col items-center gap-6 border-t border-slate-900 bg-slate-950/50">
+        <div>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Créé par Zao Barrez-Girardot</p>
+            <a href="https://fr.tipeee.com/zao" target="_blank" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 text-rose-400 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-rose-500/20 active:scale-95 transition-all border border-rose-500/20 shadow-lg shadow-rose-500/5">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                Me soutenir sur Tipeee
+            </a>
+        </div>
+        <p class="text-[9px] text-slate-700 font-medium">Source : github.com/Kalarma/Revision_BTS</p>
+    </footer>
+
     <script>
-        const GITHUB_REPO = "Kalarma/Revision_BTS";
-        const API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/`;
+        // Configuration
+        const USERNAME = "Kalarma";
+        const REPO = "Revision_BTS";
+        const API_URL = `https://api.github.com/repos/${USERNAME}/${REPO}/contents/`;
+        // URL de base pour GitHub Pages
+        const BASE_URL = `https://${USERNAME}.github.io/${REPO}/`;
 
         async function fetchModules() {
             const grid = document.getElementById('app-grid');
@@ -80,7 +91,7 @@
                 
                 const data = await response.json();
                 
-                // On ne garde que les dossiers (type === 'dir') et on ignore les dossiers cachés
+                // On filtre pour ne garder que les dossiers
                 const folders = data.filter(item => item.type === 'dir' && !item.name.startsWith('.'));
 
                 if (folders.length === 0) {
@@ -89,29 +100,32 @@
                     return;
                 }
 
-                grid.innerHTML = folders.map((folder, index) => `
-                    <a href="https://github.com/${GITHUB_REPO}/tree/main/${folder.path}" 
-                       target="_blank"
-                       class="glass-card p-8 rounded-[2rem] flex flex-col items-start group animate-fade-in"
+                grid.innerHTML = folders.map((folder, index) => {
+                    // L'URL pointe directement vers l'app hébergée
+                    const appUrl = `${BASE_URL}${folder.path}/index.html`;
+                    
+                    return `
+                    <a href="${appUrl}" 
+                       class="glass-card p-8 rounded-[2.5rem] flex flex-col items-start group animate-fade-in"
                        style="animation-delay: ${index * 100}ms">
                         
-                        <div class="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-6 group-hover:bg-indigo-500 group-hover:text-white transition-all">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                        <div class="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-6 group-hover:bg-indigo-500 group-hover:text-white group-hover:rotate-6 transition-all duration-300">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                             </svg>
                         </div>
                         
-                        <h3 class="text-xl font-bold text-white mb-2">${cleanName(folder.name)}</h3>
-                        <p class="text-slate-500 text-sm leading-relaxed mb-6">Accéder au module de révision pour le dossier ${folder.name}.</p>
+                        <h3 class="text-xl font-extrabold text-white mb-2">${cleanName(folder.name)}</h3>
+                        <p class="text-slate-500 text-xs leading-relaxed font-medium">Cliquez pour lancer ce module de révision interactif.</p>
                         
-                        <div class="mt-auto flex items-center text-indigo-400 text-xs font-black uppercase tracking-widest">
-                            Ouvrir le module
-                            <svg class="w-4 h-4 ml-2 transform group-hover:translateX-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        <div class="mt-8 flex items-center text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                            Lancer l'app
+                            <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                             </svg>
                         </div>
                     </a>
-                `).join('');
+                `}).join('');
 
                 loader.classList.add('hidden');
                 grid.classList.remove('hidden');
@@ -123,7 +137,6 @@
             }
         }
 
-        // Fonction pour rendre les noms de dossiers plus jolis (ex: "Revision_MCO" -> "Revision MCO")
         function cleanName(name) {
             return name.replace(/_/g, ' ').replace(/-/g, ' ');
         }
